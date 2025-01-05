@@ -1,0 +1,109 @@
+{% extends "layouts/base.html" %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}
+  サブスク管理 - {{ block.super }}
+{% endblock title %}
+
+{% block content %}
+<div class="px-4">
+  <div class="mx-auto lg:w-4/5 flex flex-col lg:flex-row gap-4 mb-8">
+    <div class="lg:w-3/5">
+      <canvas id="myChart"></canvas>
+    </div>
+    <div class="lg:w-2/5 space-y-4 rounded-lg border border-gray-100 bg-gray-50 p-6 dark:border-gray-700 dark:bg-gray-800">
+      <h2 class="text-xl font-bold mb-4 dark:text-white">月間</h2>
+      <div class="space-y-2">
+        {% for category, cost in category_costs.items %}
+        <dl class="flex items-center justify-between gap-4">
+          <dt class="text-base font-normal text-gray-500 dark:text-gray-400">{{ category }}</dt>
+          <dd class="text-base font-medium text-gray-900 dark:text-white">¥{{ cost|floatformat:"0"|intcomma }}</dd>
+        </dl>
+        {% endfor %}
+      </div>
+    
+      <dl class="flex items-center justify-between gap-4 border-t border-gray-200 pt-2 dark:border-gray-700">
+        <dt class="text-base font-bold text-gray-900 dark:text-white">Total</dt>
+        <dd class="text-base font-bold text-gray-900 dark:text-white">¥{{ total_cost|floatformat:"0"|intcomma }}</dd>
+      </dl>
+    </div>
+  </div>
+  <div class="mx-auto lg:w-4/5">
+    <h2 class="text-2xl font-bold mb-4 dark:text-white">サブスクリプション一覧</h2>
+    <div class="relative overflow-x-auto">
+      <table class="w-full text-left rtl:text-right text-gray-500 dark:text-gray-400">
+          <thead class="text-sm text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                  <th scope="col" class="px-6 py-3">
+                      サービス
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                      カテゴリ
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                      次回更新日
+                  </th>
+                  <th scope="col" class="px-6 py-3">
+                      金額
+                  </th>
+              </tr>
+          </thead>
+          <tbody>
+              {% for subscription in subscriptions %}
+              <tr class="bg-white border-b dark:bg-gray-800 dark:border-gray-700">
+                  <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+                    {{ subscription.name }}
+                  </th>
+                  <td class="px-6 py-4">
+                    {{ subscription.category.name }}
+                  </td>
+                  <td class="px-6 py-4">
+                    {{ subscription.next_billing_date }}
+                  </td>
+                  <td class="px-6 py-4">
+                    ¥{{ subscription.price|floatformat:"0"|intcomma }}<span class="text-xs"> / {{ subscription.get_billing_cycle_display }}</span>
+                  </td>
+              </tr>
+              {% endfor %}
+          </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block script %}
+<script>
+  const ctx = document.getElementById("myChart");
+  new Chart(ctx, {
+    type: "doughnut",
+    data: {
+      labels: [{% for category, cost in category_costs.items %}"{{ category }}",{% endfor %}],
+      datasets: [{
+        data: [{% for category, cost in category_costs.items %}{{ cost }},{% endfor %}],
+        backgroundColor: [
+          "rgb(255, 99, 132)",
+          "rgb(54, 162, 235)",
+          "rgb(255, 205, 86)",
+          "rgb(75, 192, 192)",
+          "rgb(153, 102, 255)",
+          "rgb(255, 159, 64)"
+        ],
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          position: 'top',
+        },
+        title: {
+          display: true,
+          text: 'カテゴリ別支出'
+        }
+      }
+    }
+  });
+</script>
+{% endblock script %}
